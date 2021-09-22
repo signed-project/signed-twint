@@ -1,0 +1,30 @@
+{
+  "name": "singedparser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --inspect index.js",
+    "one": "node --inspect indexOne.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.4",
+    "bip38": "^3.1.1",
+    "bitcoinjs-lib": "^5.2.0",
+    "bitcoinjs-message": "^2.2.0",
+    "bluebird": "^3.7.2",
+    "bs58": "^4.0.1",
+    "crypto-js": "^4.1.1",
+    "exec-sh": "^0.4.0",
+    "fast-json-stable-stringify": "^2.1.0",
+    "nanoid": "^3.1.25",
+    "parse-json": "^5.2.0",
+    "secure-remote-password": "^0.3.1",
+    "sort-keys": "^5.0.0",
+    "sort-object-keys": "^1.1.3",
+    "wif": "^2.0.6"
+  }
+}
