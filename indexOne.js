@@ -119,7 +119,7 @@ const generateTweetThreads = ({ onwTweets, tweetsToUser }) => {
             // console.log('____________________commentsList____________________', commentsList.length);
             // console.log('____________________onwTweets____________________', onwTweets.length);
         }
-        console.log('tw.tweet', tw.tweet);
+        // console.log('tw.tweet', tw.tweet);
         return ({
             comments: tweetsToUser.filter(t => t.conversation_id === tw.conversation_id),
             tweet: tw
@@ -346,9 +346,8 @@ const addSourceToNode = async ({ sourceMap }) => {
     }
 }
 
-const delay = (ms) => {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
+
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 const addPostsToNode = async ({ postArr }) => {
     // postArr.map(async (post, i) => {
@@ -373,49 +372,83 @@ const addPostsToNode = async ({ postArr }) => {
     // } catch (err) {
     //     console.log(err);
     // }
+    let backOffTime = 100;
+    // for (let i = 0; i < fileIds.length; i++) {
+    //     let fileId = fileIds[i];
+    //     await getFileName(fileId, auth)
+    //         .then((name) => {
+    //             // do some work
+    //         })
+    //         .catch((err) => {
+    //             // assumes that the error is "request made too soon"
+    //             backOffTime *= 2;
+    //             i--;
+    //             console.log(err);
+    //             return delay(backOffTime);
+    //         });
+    // }
+
+    /*     for (let i = 0; i < postArr.length; i++) {
+            let post = postArr[i];
+            await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] })
+                .then((name) => {
+                    // do some work
+                })
+                .catch((err) => {
+                    console.log('res[][error]', i);
+    
+                    // assumes that the error is "request made too soon"
+                    backOffTime *= 2;
+                    i--;
+                    console.log(err);
+                    return delay(backOffTime);
+                });
+        } */
 
 
-    try {
-        const addPostResult = await Promise.allSettled(
-            postArr.map(async (post, i) => {
-                let data;
-                try {
-                    ({ data } = await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] }));
-                    console.log('res[addPostResult]', data);
-                } catch (e) {
-                    console.log('res[addPostResult][error]', e);
-                    data = ''
-                } finally {
-                    return data
-                }
-                // await sleep(5000);
-            })
-        )
-
-        console.log('addPostResult[addPostResult]', addPostResult);
+    for (let i = 0; i < postArr.length; i++) {
+        let post = postArr[i];
+        try {
+            ({ data } = await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] }));
+            console.log('res[addPostResult]', i);
+            console.log('res[addPostResult]', data);
+        }
+        catch (e) {
+            console.log('res[addPostResult][error]', e);
+            backOffTime *= 2;
+            i--;
+            await delay(backOffTime);
+        }
     }
-    catch (e) {
-        console.warn('[addPostsToNode][Promise.allSettled]', e)
-    }
 
 
-    // axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] });
+
+    /*     try {
+            const addPostResult = await Promise.allSettled(
+                postArr.map(async (post, i) => {
+                    let data;
+                    try {
+                        ({ data } = await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] }));
+                        console.log('res[addPostResult]', data);
+                    } catch (e) {
+                        console.log('res[addPostResult][error]', e);
+                        data = ''
+                    } finally {
+                        return data
+                    }
+                    // await sleep(5000);
+                })
+            )
+    
+            console.log('addPostResult[addPostResult]', addPostResult);
+        }
+        catch (e) {
+            console.warn('[addPostsToNode][Promise.allSettled]', e)
+        } */
 
 
-    // postArr.map(async (post, i) => {
-    //     console.log('i---', i);
-    //     await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] });
-    //     await delay(5000)
-    // })
 
 
-    // await Promise.allSettled(
-    //     postArr.map(async (post, i) => {
-    //         console.log('i---', i);
-    //         await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] });
-    //         await delay(5000)
-    //     })
-    // )
 }
 
 
@@ -436,49 +469,53 @@ const addPostsToNode = async ({ postArr }) => {
     let newUsersArr = [];
 
     const addNewUserFeed = async ({ userName }) => {
-        // console.log('[addNewUserFeed]----------------[userName]', userName);
+        console.log('[addNewUserFeed]----------------[userName]', userName);
 
         try {
-            // await updateFile({ filePath: currentUserTweetsPath, newData: '' });
-            // await executeCommand({ command: getCommandCurrentUserTweets({ userName }) });
+            await updateFile({ filePath: currentUserTweetsPath, newData: '' });
+            await executeCommand({ command: getCommandCurrentUserTweets({ userName }) });
         } catch (e) {
             console.warn('[executeCommand][getCurrentUserTweets]', e)
         }
 
         try {
-            userTweetsArr = await readFile({ filePath: generateCurrentUserTweetsPath({ userName }) });
-            // userTweetsArr = await readFile({ filePath: currentUserTweetsPath });
+            // userTweetsArr = await readFile({ filePath: generateCurrentUserTweetsPath({ userName }) });
+            userTweetsArr = await readFile({ filePath: currentUserTweetsPath });
             userTweetOwnPage = userTweetsArr.filter(tweet => tweet.reply_to.length === 0);
         } catch (e) {
             console.warn('[readFile][getCurrentUserTweets]', e);
         }
 
         try {
-            // await updateFile({ filePath: directToCurrentUserPath, newData: '' });
-            // await executeCommand({ command: getCommandDirectToUser({ userName }) });
+            await updateFile({ filePath: directToCurrentUserPath, newData: '' });
+            await executeCommand({ command: getCommandDirectToUser({ userName }) });
         }
         catch (e) {
             console.warn('[executeCommand][directToUserTweets]', e);
         }
 
         try {
-            directToUserTweetsArr = await readFile({ filePath: generateInboxUserTweetsPath({ userName }) });
-            // directToUserTweetsArr = await readFile({ filePath: directToCurrentUserPath });
+            // directToUserTweetsArr = await readFile({ filePath: generateInboxUserTweetsPath({ userName }) });
+            directToUserTweetsArr = await readFile({ filePath: directToCurrentUserPath });
         } catch (e) {
             console.warn('[readFile][directToUserTwitsArr]', e);
         }
 
+        console.log('userTweetOwnPage', userTweetOwnPage.length);
+        console.log('directToUserTweetsArr', directToUserTweetsArr.length);
+
         const threads = generateTweetThreads({ onwTweets: userTweetOwnPage, tweetsToUser: directToUserTweetsArr });
+
+        console.log('threads', threads.length);
 
         const usersDirectToMap = generateUserMap({ tweets: directToUserTweetsArr, userStorageMap: existSourceMapStorage });
         const currentUserMap = generateUserMap({ tweets: userTweetOwnPage, isCurrent: true, userStorageMap: existSourceMapStorage });
         const combineUsersMap = new Map([...usersDirectToMap, ...currentUserMap]);
-        // console.log('combineUsersMap[[combineUsersMap]]', combineUsersMap);
+        console.log('combineUsersMap[[combineUsersMap]]', combineUsersMap.size);
 
         const sourcesMap = generateSourcesMap({ usersMap: combineUsersMap });
 
-
-
+        
         try {
             await addSourceToNode({ sourceMap: sourcesMap });
         } catch (e) {
@@ -487,12 +524,11 @@ const addPostsToNode = async ({ postArr }) => {
 
         existSourceMapStorage = new Map([...combineUsersMap, ...existSourceMapStorage]);
 
-
-        console.log('userTweetOwnPage', userTweetOwnPage.length);
-        console.log('threads', threads.length);
-        console.log('sourcesMap.size', sourcesMap.size);
-        console.log('combineUsersMap.size', combineUsersMap.size);
-        console.log('existSourceMapStorage.size', existSourceMapStorage.size);
+        // console.log('userTweetOwnPage', userTweetOwnPage.length);
+        // console.log('threads', threads.length);
+        // console.log('sourcesMap.size', sourcesMap.size);
+        // console.log('combineUsersMap.size', combineUsersMap.size);
+        // console.log('existSourceMapStorage.size', existSourceMapStorage.size);
 
         let directToArrNames = Array.from(combineUsersMap.keys());
         newUsersArr = [...newUsersArr, ...directToArrNames];
@@ -504,6 +540,7 @@ const addPostsToNode = async ({ postArr }) => {
         const postArr = generatePostArr({ threads, existPostMapStorage, existSourceMapStorage });
 
         console.log('postArr', postArr.length);
+        console.log('newUsersArr', newUsersArr.length);
         try {
             await addPostsToNode({ postArr });
         }
@@ -512,19 +549,17 @@ const addPostsToNode = async ({ postArr }) => {
         }
         const newPostMap = mapFromArr({ arr: postArr, keyName: 'id' });
         existPostMapStorage = new Map([...newPostMap, ...existPostMapStorage]);
-        // console.log('[indexRecursion][postArr.length]', postArr.length);
-        // console.log('[indexRecursion][newUsersArr]', newUsersArr);
+
         // userArr.length < 50 &&
-        // while (iterator <= 2) {
-        //     console.log('iterator', iterator);
-        //     console.log('userArr', userArr);
-        //     const name = userArr[iterator++];
-        //     // const name = newUsersArr[iterator++];
-        //     console.log('[RECURSION]newUsersArrIterator', name);
-        //     await addNewUserFeed({ userName: name });
-        // }
+        while (iterator <= 1000) {
+            console.log('iterator', iterator);
+            console.log('userArr', userArr);
+            // const name = userArr[iterator++];
+            const name = newUsersArr[iterator++];
+            console.log('[RECURSION]newUsersArrIterator', name);
+            await addNewUserFeed({ userName: name });
+        }
     }
     await addNewUserFeed({ userName: twitterUserName });
-
 })();
 
