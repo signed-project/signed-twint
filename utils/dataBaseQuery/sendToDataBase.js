@@ -1,8 +1,8 @@
-
+const { host, userApi, postApi } = require("../../config");
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-const addSourceToNode = async ({ sourceMap }) => {
+const addSourceToNode = async ({ sourceMap, query }) => {
 
     try {
         await Promise.allSettled(
@@ -16,7 +16,7 @@ const addSourceToNode = async ({ sourceMap }) => {
                         encryptedWif: user.encryptedWif,
                         source: user.source,
                     };
-                    await axios.post(`${userApi.REGISTER}`, data);
+                    await query.post(`${userApi.REGISTER}`, data);
                 }));
     }
     catch (e) {
@@ -26,7 +26,7 @@ const addSourceToNode = async ({ sourceMap }) => {
 
 
 
-const addPostsToNode = async ({ postArr }) => {
+const addPostsToNode = async ({ postArr, query }) => {
     // postArr.map(async (post, i) => {
     //     try {
     //         await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] });
@@ -86,7 +86,7 @@ const addPostsToNode = async ({ postArr }) => {
     for (let i = 0; i < postArr.length; i++) {
         let post = postArr[i];
         try {
-            ({ data } = await axios.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] }));
+            ({ data } = await query.post(`${postApi.SEND_POST}`, { post, addToIndex: true, tags: [] }));
             console.log('res[addPostResult]', i);
             console.log('res[addPostResult]', data);
         }
@@ -97,7 +97,6 @@ const addPostsToNode = async ({ postArr }) => {
             await delay(backOffTime);
         }
     }
-
 
 
     /*     try {
@@ -122,4 +121,9 @@ const addPostsToNode = async ({ postArr }) => {
         catch (e) {
             console.warn('[addPostsToNode][Promise.allSettled]', e)
         } */
+}
+
+module.exports = {
+    addPostsToNode,
+    addSourceToNode
 }

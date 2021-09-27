@@ -1,6 +1,11 @@
+const { User } = require("../models/user");
+const { Post } = require("../models/post");
 
 
-
+const utcToTimestamp = (date) => {
+    const d = new Date(date)
+    return d.getTime();
+}
 
 const generatePostFromTweet = ({ tweet, sourceMap, target, type }) => {
     // console.log('tweet', tweet);
@@ -121,4 +126,14 @@ const generateUserMap = ({ tweets, isCurrent = false, userStorageMap }) => {
         })
     }
     return usersMap
+}
+
+
+module.exports = {
+    generateUserMap,
+    generateTweetThreads,
+    mapFromArr,
+    generateSourcesMap,
+    generatePostArr,
+    generatePostFromTweet
 }

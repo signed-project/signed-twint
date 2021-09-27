@@ -1,3 +1,5 @@
+const fsp = require("fs/promises");
+
 const updateFile = async ({ filePath, newData }) => {
     try {
         await fsp.writeFile(filePath, newData);
@@ -5,7 +7,6 @@ const updateFile = async ({ filePath, newData }) => {
         console.error("[clearFile]", e);
     }
 };
-
 
 
 const readFile = async ({ filePath }) => {
@@ -17,4 +18,9 @@ const readFile = async ({ filePath }) => {
     } catch (e) {
         console.error("[read Json Main Query (1)][readFile]", e);
     }
+}
+
+module.exports = {
+    readFile,
+    updateFile
 }

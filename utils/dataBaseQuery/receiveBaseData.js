@@ -1,19 +1,23 @@
+const axios = require("axios");
+const { mapFromArr } = require('../generateData')
+const { User } = require('../../models/user')
+const { host, userApi, postApi } = require("../../config");
 
-
-const getUsersData = async ({ sources }) => {
+const getUsersData = async ({ sources, query }) => {
     const sourcesMap = mapFromArr({ arr: sources, keyName: 'publicName' });
     const dataBaseUserMap = new Map();
 
     const resultData = await Promise.allSettled(
         sources.map(async (s) => {
             try {
-                ({ data } = await axios.post(`${host.API_HOST}${userApi.GET_USER}`, { userName: s.publicName }));
+                // ({ data } = await axios.post(`${host.API_HOST}${userApi.GET_USER}`, { userName: s.publicName }));
+                ({ data } = await query.post(`${userApi.GET_USER}`, { userName: s.publicName }));
                 return data;
             } catch (e) {
-                console.warn("[getIndexSaga][getAllHostsIndex]", e);
+                console.warn("[dataBaseQuery][getAllHostsIndex]", e);
             }
         })
-    )
+    );
     resultData.map(data => {
         if (data.status === 'fulfilled' && data?.value?.encryptedWif && data?.value?.userName) {
             const userInstance = new User({});
@@ -29,24 +33,7 @@ const getUsersData = async ({ sources }) => {
     return dataBaseUserMap;
 }
 
-const getAllHostsIndex = async ({ axios }) => {
-    let data;
-    try {
-        ({ data } = await axios.get(`${host.API_HOST}${userApi.SUBSCRIBED}`));
-    } catch (e) {
-        console.warn("[getIndexSaga][getAllHostsIndex]", e);
-    }
 
-    try {
-        const { gatheredPosts, hostSources } = await getSubscribedIndex({
-            subscribed: data,
-        });
-        return { gatheredPosts, hostSources };
-    } catch (e) {
-        console.warn("[getIndexSaga][getAllHostsIndex][getSubscribedIndex]", e);
-        return [];
-    }
-};
 
 
 const getSubscribedIndex = async ({ subscribed }) => {
@@ -58,7 +45,7 @@ const getSubscribedIndex = async ({ subscribed }) => {
             subscribed.map(async (sbs) => {
                 await Promise.allSettled(
                     sbs.hosts.map(async (hst) => {
-                        let res = await axiosLib.get(`${hst.index}`);
+                        let res = await axios.get(`${hst.index}`);
                         if (res?.data?.index) {
                             postSubscribed.push(res?.data?.index);
                         }
@@ -85,3 +72,30 @@ const getSubscribedIndex = async ({ subscribed }) => {
 
     return { gatheredPosts, hostSources };
 };
+
+
+const getAllHostsIndex = async ({ query, host, userApi }) => {
+    let data;
+    try {
+        ({ data } = await query.get(`${host.API_HOST}${userApi.SUBSCRIBED}`));
+    } catch (e) {
+        console.warn("[getIndexSaga][getAllHostsIndex]", e);
+    }
+
+    try {
+        const { gatheredPosts, hostSources } = await getSubscribedIndex({
+            subscribed: data,
+            query
+        });
+        return { gatheredPosts, hostSources };
+    } catch (e) {
+        console.warn("[getIndexSaga][getAllHostsIndex][getSubscribedIndex]", e);
+        return [];
+    }
+};
+
+
+module.exports = {
+    getAllHostsIndex,
+    getUsersData
+}
