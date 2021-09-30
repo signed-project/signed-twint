@@ -63,8 +63,9 @@ class Post {
     constructor(data) {
         this.data = {
             source: data.source,
-            currentUserAddress: data.currentUserAddress ? data.currentUserAddress : '',
-            id: `twitter_${data.id}`,
+            ownerFeedSourceAddress: data.ownerFeedSourceAddress ? data.ownerFeedSourceAddress : '',
+            // id: `twitter_${data.id}`,
+            id: data.postId ? data.postId : `twitter_${data.id}`,
             type: data.type,
             createdAt: data.createdAt ? data.createdAt : 0,
             updatedAt: data.createdAt ? data.createdAt : 0,
@@ -76,10 +77,43 @@ class Post {
             commentsCount: data.commentsCount ? data.commentsCount : 0,
             mentions: data.mentions ? data.mentions : '',
             tags: data.tags ? data.tags : [],
-            wif: data.wif
+            hash: data.hash ? data.hash : '',
+            signatures: data.signatures ? data.signatures : '',
+            wif: data.wif,
         }
     }
 
+    get addSignature() {
+        const post = {
+            source: this.data.source,
+            id: this.data.id,
+            type: this.data.type,
+            createdAt: this.data.createdAt,
+            updatedAt: this.data.updatedAt,
+            text: this.data.text,
+            attachments: this.data.attachments,
+            target: this.data.target,
+            likesCount: this.data.likesCount,
+            repostsCount: this.data.repostsCount,
+            commentsCount: this.data.commentsCount,
+            mentions: this.data.mentions,
+            hash: this.data.hash,
+        };
+
+        const newSignature = getSignatures({ data: post, wif: this.data.wif });
+        const signatureItem = {
+            signature: newSignature,
+            address: this.data.ownerFeedSourceAddress
+        };
+        if (Array.isArray(this.data.signatures)) {
+            this.data.signatures.push(signatureItem)
+        }
+        return {
+            ...post,
+            signatures: this.data.signatures,
+            destinationAddress: this.data.destinationAddress,
+        }
+    }
 
     get newPost() {
         const post = {
@@ -99,11 +133,10 @@ class Post {
 
         const hash = getHash({ data: post });
         const signature = getSignatures({ data: post, wif: this.data.wif });
-
         return {
             ...post,
             signatures: [{ signature, address: this.data.source.address }],
-            hash: hash
+            hash: hash,
         }
     }
 }

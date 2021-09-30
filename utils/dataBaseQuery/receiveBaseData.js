@@ -24,7 +24,8 @@ const getUsersData = async ({ sources, query }) => {
             userInstance.setUserData = {
                 encryptedWif: data.value.encryptedWif,
                 userName: data.value.userName,
-                source: sourcesMap.get(data.value.userName)
+                source: sourcesMap.get(data.value.userName),
+                token: data.value.accessToken
             };
             const user = userInstance.newDataBaseUser;
             dataBaseUserMap.set(user.userName, user);

@@ -8,18 +8,8 @@ const utcToTimestamp = (date) => {
 }
 
 const generatePostFromTweet = ({ tweet, sourceMap, target, type }) => {
-    // console.log('tweet', tweet);
-    // console.log('sourceMap', sourceMap);
-    // console.log('target', target);
-    // console.log('type', type);
-    const { source, wif } = sourceMap.get(tweet.username);
-    // console.log('tweet.username', tweet.username);
-    // console.log('source, ----  wif ', wif);
-    // console.log('source, --- address ', source.address);
+    const { source, wif, token } = sourceMap.get(tweet.username);
     const createdAt = utcToTimestamp(tweet.created_at);
-
-    console.log('tweet.created_at', tweet.created_at);
-    console.log('createdAt', createdAt);
     const postModel = new Post({
         source,
         id: tweet.id,
@@ -29,14 +19,33 @@ const generatePostFromTweet = ({ tweet, sourceMap, target, type }) => {
         target: target ? target : '',
         likesCount: tweet.likes_count,
         commentsCount: tweet.replies_count,
-        wif: wif
+        wif: wif,
     });
-    return postModel.newPost
+    return { ...postModel.newPost, token }
 }
 
+const generatePostLikeAcceptedInInbox = ({ post, sourceMap, ownerFeedSource }) => {
+    const { source, wif, token } = sourceMap.get(ownerFeedSource.publicName);
+    const postModelInbox = new Post({
+        ...post,
+        ownerFeedSourceAddress: source.address,
+        postId: post.id,
+        wif: wif,
+    });
+    return { ...postModelInbox.addSignature, token, destinationAddress: ownerFeedSource.address }
+}
 
 const generatePostArr = ({ threads, existPostMapStorage, existSourceMapStorage }) => {
+
+    console.log('threads', threads.length);
+    console.log('existPostMapStorage', existPostMapStorage.size);
+    console.log('existSourceMapStorage', existSourceMapStorage.size);
+
     const postArr = [];
+    if (!existSourceMapStorage.size > 0) {
+        console.warn('[generatePostArr][!existPostMapStorage.size > 0]');
+        return postArr
+    }
     threads.filter(thr => !existPostMapStorage.has(thr.tweet.username)).map(th => {
         const threadHeadPost = generatePostFromTweet({ tweet: th.tweet, sourceMap: existSourceMapStorage, type: 'post' });
         postArr.push(threadHeadPost);
@@ -48,6 +57,15 @@ const generatePostArr = ({ threads, existPostMapStorage, existSourceMapStorage }
                 };
                 const commentPost = generatePostFromTweet({ tweet: tw, sourceMap: existSourceMapStorage, target, type: 'reply' });
                 postArr.push(commentPost);
+                // console.log('[commentPost][!!!]', commentPost);
+                const commentPostCopy = JSON.parse(JSON.stringify(commentPost));
+                const commentPostOwnerFeed = generatePostLikeAcceptedInInbox({
+                    post: commentPostCopy,
+                    sourceMap: existSourceMapStorage,
+                    ownerFeedSource: threadHeadPost.source
+                });
+                // console.log('[commentPostOwnerFeed][!!!]', commentPostOwnerFeed);
+                postArr.push(commentPostOwnerFeed);
             });
         }
     })
@@ -66,8 +84,6 @@ const generateSourcesMap = ({ usersMap }) => {
     }
     return usersMap;
 }
-
-
 
 
 const mapFromArr = ({ arr, keyName }) => {

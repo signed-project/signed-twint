@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { host } = require("../config");
+const { host } = require("../../config");
 
 
 class Query {
@@ -29,11 +29,29 @@ class Query {
         });
         return query
     }
-
-
 }
 
+const publicQuery = () => {
+    return axios.create({
+        baseURL: host.API_HOST,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    });
+}
+
+const protectedQuery = ({ token }) => {
+    return axios.create({
+        baseURL: host.API_HOST,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Bearer ${token}`,
+        }
+    });
+}
 
 module.exports = {
-    Query: Query
+    Query,
+    publicQuery,
+    protectedQuery
 }

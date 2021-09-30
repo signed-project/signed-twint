@@ -33,4 +33,6 @@ exports.userApi = {
 
 exports.postApi = {
     SEND_POST: "/post",
+    INBOX_UPDATE_STATE: '/inbox/update',
+    INBOX: '/inbox',
 };

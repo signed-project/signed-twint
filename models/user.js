@@ -20,6 +20,7 @@ class User {
         this.data = {
             wif: wifEncode,
             userName: data.userName ? data.userName : '',
+            token: data.token ? data.token : '',
             source: data.source ? data.source : {},
         };
     }
@@ -63,8 +64,6 @@ class User {
                 hosts: hosts,
             }
         };
-
-
 
         const signatures = getSignatures({ data: data.source, wif: data.wif });
         const hash = getHash({ data: data.source });
