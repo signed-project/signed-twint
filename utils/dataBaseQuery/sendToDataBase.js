@@ -27,6 +27,7 @@ const addSourceToNode = async ({ sourceMap, query }) => {
                 try {
                     ({ data: aliasData } = await query.post(`${userApi.REGISTER}`, data));
                     if (aliasData.accessToken) {
+                        console.log('aliasData.accessToken', aliasData.accessToken);
                         sourceMapCopy.set(key, { ...user, token: aliasData.accessToken });
                     }
                 } catch (e) {
@@ -69,14 +70,21 @@ const addPostsToNode = async ({ postArr, protectedQuery }) => {
         console.warn("addPostsToInbox]", e);
     }
 
+    // postArr = postArr.reverse();
+    console.log('postAr{((((((((((((((((((((((((1))))))))))))))))))))))))}', postArr.filter(data => data.signatures.length === 2).length);
     let resData,
         backOffTime = 100;
     for (let i = 0; i < postArr.length; i++) {
         let post = postArr[i];
+        console.log('[III]', i);
+        // console.log('post---token', post.token);
+
         let path, data;
         const query = protectedQuery({ token: post.token });
         delete post.token;
+        console.log('post.signatures.length', post.signatures);
         if (post.signatures.length === 2) {
+            console.log("WHAT DO i do HERE!!!!_____000");
             path = `${postApi.INBOX_UPDATE_STATE}`;
             const destinationAddress = post.destinationAddress;
             delete post.destinationAddress;
@@ -87,17 +95,21 @@ const addPostsToNode = async ({ postArr, protectedQuery }) => {
                 authorAddress: post.source.address,
                 post,
             };
+
+            console.log("WHAT DO i do HERE!!!!");
+            console.log("WHAT DO i do HERE!!!!");
             console.log("WHAT DO i do HERE!!!!", post.signatures);
         } else {
             path = `${postApi.SEND_POST}`;
             data = { post, addToIndex: true, tags: [] };
-            console.log("res[addPostResult]", i);
-            // console.log("res[addPostResult]", data);
+            // console.log("res[addPostResult]", i);
+            console.log("res[addPostResult][own post]", post.source.publicName);
+            console.log("res[addPostResult][own post]", post.text);
         }
-        console.log("path[SEND POST]", path);
+        // console.log("path[SEND POST]", path);
         try {
             ({ data: resData } = await query.post(path, data));
-            console.log('data[query.post]', resData);
+            // console.log('data[query.post]', resData);
         } catch (e) {
             console.log('res[addPostResult][error]', e);
             backOffTime *= 2;

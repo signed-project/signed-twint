@@ -4,6 +4,7 @@ const { User } = require('../../models/user')
 const { host, userApi, postApi } = require("../../config");
 
 const getUsersData = async ({ sources, query }) => {
+    console.log('----------1--------------');
     const sourcesMap = mapFromArr({ arr: sources, keyName: 'publicName' });
     const dataBaseUserMap = new Map();
 
@@ -31,6 +32,7 @@ const getUsersData = async ({ sources, query }) => {
             dataBaseUserMap.set(user.userName, user);
         }
     })
+    console.log('----------2--------------', dataBaseUserMap.size)
     return dataBaseUserMap;
 }
 
@@ -64,6 +66,9 @@ const getSubscribedIndex = async ({ subscribed }) => {
 
     try {
         postSubscribed.map((posts) => {
+            if (!Array.isArray(posts)) {
+                posts = []
+            }
             gatheredPosts = [...gatheredPosts, ...posts];
             return posts;
         });

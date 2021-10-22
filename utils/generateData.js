@@ -8,8 +8,13 @@ const utcToTimestamp = (date) => {
 }
 
 const generatePostFromTweet = ({ tweet, sourceMap, target, type }) => {
+    let attachmentUrl = [];
     const { source, wif, token } = sourceMap.get(tweet.username);
     const createdAt = utcToTimestamp(tweet.created_at);
+
+    if (Array.isArray(tweet.photos) && tweet.photos.length > 0) {
+        attachmentUrl = tweet.photos.map(ph => ({ url: ph }));
+    }
     const postModel = new Post({
         source,
         id: tweet.id,
@@ -20,12 +25,14 @@ const generatePostFromTweet = ({ tweet, sourceMap, target, type }) => {
         likesCount: tweet.likes_count,
         commentsCount: tweet.replies_count,
         wif: wif,
+        attachmentUrl: attachmentUrl,
     });
     return { ...postModel.newPost, token }
 }
 
 const generatePostLikeAcceptedInInbox = ({ post, sourceMap, ownerFeedSource }) => {
     const { source, wif, token } = sourceMap.get(ownerFeedSource.publicName);
+
     const postModelInbox = new Post({
         ...post,
         ownerFeedSourceAddress: source.address,
@@ -36,11 +43,6 @@ const generatePostLikeAcceptedInInbox = ({ post, sourceMap, ownerFeedSource }) =
 }
 
 const generatePostArr = ({ threads, existPostMapStorage, existSourceMapStorage }) => {
-
-    console.log('threads', threads.length);
-    console.log('existPostMapStorage', existPostMapStorage.size);
-    console.log('existSourceMapStorage', existSourceMapStorage.size);
-
     const postArr = [];
     if (!existSourceMapStorage.size > 0) {
         console.warn('[generatePostArr][!existPostMapStorage.size > 0]');
@@ -57,14 +59,12 @@ const generatePostArr = ({ threads, existPostMapStorage, existSourceMapStorage }
                 };
                 const commentPost = generatePostFromTweet({ tweet: tw, sourceMap: existSourceMapStorage, target, type: 'reply' });
                 postArr.push(commentPost);
-                // console.log('[commentPost][!!!]', commentPost);
                 const commentPostCopy = JSON.parse(JSON.stringify(commentPost));
                 const commentPostOwnerFeed = generatePostLikeAcceptedInInbox({
                     post: commentPostCopy,
                     sourceMap: existSourceMapStorage,
                     ownerFeedSource: threadHeadPost.source
                 });
-                // console.log('[commentPostOwnerFeed][!!!]', commentPostOwnerFeed);
                 postArr.push(commentPostOwnerFeed);
             });
         }
@@ -106,8 +106,8 @@ const generateTweetThreads = ({ onwTweets, tweetsToUser }) => {
     const tweetAndCommentsArr = onwTweets.map(tw => {
         const commentsList = tweetsToUser.filter(t => t.conversation_id === tw.conversation_id);
         if (commentsList.length > 0) {
-            // console.log('____________________commentsList____________________', commentsList.length);
-            // console.log('____________________onwTweets____________________', onwTweets.length);
+            console.log('____________________commentsList____________________', commentsList.length);
+            console.log('____________________onwTweets____________________', onwTweets.length);
         }
         // console.log('tw.tweet', tw.tweet);
         return ({
@@ -144,6 +144,13 @@ const generateUserMap = ({ tweets, isCurrent = false, userStorageMap }) => {
     return usersMap
 }
 
+const correctJsonData = ({ listLikeJson }) => {
+
+    const listLikeJsonWithoutSpace = listLikeJson.trim()
+    const jsonDataArr = "[" + listLikeJsonWithoutSpace.replace(/\n/g, ",") + "]";
+    return JSON.parse(jsonDataArr);
+}
+
 
 module.exports = {
     generateUserMap,
@@ -151,5 +158,6 @@ module.exports = {
     mapFromArr,
     generateSourcesMap,
     generatePostArr,
-    generatePostFromTweet
+    generatePostFromTweet,
+    correctJsonData
 }

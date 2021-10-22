@@ -70,7 +70,7 @@ class Post {
             createdAt: data.createdAt ? data.createdAt : 0,
             updatedAt: data.createdAt ? data.createdAt : 0,
             text: data.text,
-            attachments: data.attachments ? data.attachments : [],
+            attachments: Array.isArray(data.attachmentUrl) && data.attachmentUrl.length > 0 ? data.attachmentUrl : [],
             target: data.target ? data.target : '',
             likesCount: data.likesCount ? data.likesCount : 0,
             repostsCount: data.repostsCount ? data.repostsCount : 0,
