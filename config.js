@@ -9,7 +9,7 @@ exports.host = {
 }
 
 exports.publicApi = {
-    HOST_ASSETS: "/public/file_storage",
+    API_HOST_ASSETS: `https://kuku-staging.s3-us-west-2.amazonaws.com/public/file_storage`,
 }
 
 exports.inboxApi = {

@@ -12,42 +12,26 @@ const sleep = require('util').promisify(setTimeout)
 const PromiseBird = require('bluebird');
 const currentUserTweetsPath = './currentUserTweets.json';
 const directToCurrentUserPath = './directToCurrentUserTweets.json';
-// const indexes = './indexes_copy';
-const indexes = './indexes';
 const { getAllHostsIndex, getUsersData } = require('./utils/dataBaseQuery/receiveBaseData');
 const { addPostsToNode, addSourceToNode } = require('./utils/dataBaseQuery/sendToDataBase');
 const { readFile, updateFile, appendNewJsonFile } = require('./utils/fs');
 const { generatePostArr, generateSourcesMap, generatePostFromTweet,
     generateTweetThreads, generateUserMap, mapFromArr, correctJsonData } = require('./utils/generateData');
-const { executeCommand } = require('./utils/bashCommands');
 
 
-// const twitterUserName = 's_vakarchuk';
-// const twitterUserName = 'fcsm_official';
-// const userName = 'Bg53G';
-// const twitterUserName = 'asamigate';
 const twitterUserName = 'Bg53G';
-// const twitterUserName = 'elonmusk';
-// const twitterUserName = '12r8PojfmPOBqdL';
-// const twitterUserName = 'bbseva';
-//  --images
+const folderPath = './indexes_copy';
+// const folderPath = './indexes';
 // const getCurrentUserTweets = `docker run --mount type=bind,source="${__dirname}/currentUserTweets.json,target=/home/file.json"  -i a22c974b8730 twint -u ${twitterUserName} -o /home/file.json --json`;
 
 
-const generatePath = ({ indexes, userName, type }) => {
+const generatePath = ({ folderPath, userName, type, }) => {
     const userMark = `${type}_${userName}`;
-    return `${indexes}/${userMark}.json`;
+    return `${folderPath}/${userMark}.json`;
 }
-// const generateInboxUserTweetsPath = ({ userName }) => {
-//     return `${indexes}/inbox-${userName}.json`;
-// }
 
-const getCommandCurrentUserTweets = ({ userName }) => {
-    return `docker run --mount type=bind,source="${__dirname}/currentUserTweets.json,target=/home/file.json" -i a22c974b8730 twint -u ${userName} --retweets -o /home/file.json --json`
-}
-const getCommandDirectToUser = ({ userName }) => {
-    return `docker run --mount type=bind,source="${__dirname}/directToCurrentUserTweets.json,target=/home/file.json"  -i a22c974b8730 twint -s "to:@${userName}"  -o /home/file.json --json`
-}
+
+
 
 (async () => {
     let iterator = 0,
@@ -69,22 +53,21 @@ const getCommandDirectToUser = ({ userName }) => {
     }
     let existPostMapStorage = mapFromArr({ arr: gatheredPosts, keyName: 'id' });
 
-    const addNewUserFeed = async ({ userName }) => {
+    const addNewUserFeed = async ({ userName, maxLevels }) => {
         let userTweetsArr, userTweetOwnPage, directToUserTweetsArr, listLikeJsonUser, listLikeJsonInbox;
         console.log('[addNewUserFeed]----------------[userName]', userName);
 
         try {
-            listLikeJsonUser = await readFile({ filePath: generatePath({ indexes, userName, type: 'user' }) });
+            listLikeJsonUser = await readFile({ filePath: generatePath({ folderPath, userName, type: 'user' }) });
         } catch (e) {
             console.log('[[indexOne][appendNewJsonFile]', e);
         }
 
         userTweetsArr = correctJsonData({ listLikeJson: listLikeJsonUser });
         userTweetOwnPage = userTweetsArr.filter(tweet => tweet.reply_to.length === 0);
-        // console.log('listLikeJson[userTweetOwnPage]', userTweetOwnPage.length);
-
+        userTweetOwnPage = userTweetOwnPage.reverse();
         try {
-            listLikeJsonInbox = await readFile({ filePath: generatePath({ indexes, userName, type: 'inbox' }) });
+            listLikeJsonInbox = await readFile({ filePath: generatePath({ folderPath, userName, type: 'inbox' }) });
         } catch (e) {
             console.warn('[readFile][directToUserTwitsArr]', e);
         }
@@ -95,8 +78,6 @@ const getCommandDirectToUser = ({ userName }) => {
 
         const threads = generateTweetThreads({ onwTweets: userTweetOwnPage, tweetsToUser: directToUserTweetsArr });
 
-
-        // console.log('threads one', threads[0]);
         const usersDirectToMap = generateUserMap({ tweets: directToUserTweetsArr, userStorageMap: existSourceMapStorage });
         const currentUserMap = generateUserMap({ tweets: userTweetOwnPage, isCurrent: true, userStorageMap: existSourceMapStorage });
         let combineUsersMap = new Map([...usersDirectToMap, ...currentUserMap]);
@@ -114,10 +95,8 @@ const getCommandDirectToUser = ({ userName }) => {
         newUsersArr = [...newUsersArr, ...directToArrNames];
 
         const postArr = generatePostArr({ threads, existPostMapStorage, existSourceMapStorage });
-        // const tweetsWithAttachments = postArr.filter(tweet => tweet.attachments.length > 0);
-        const tweetsComments = postArr.filter(tweet => tweet.signatures.length === 2);
-        console.log('postArr.length', postArr.length);
-        console.log('tweetsComments[length]', tweetsComments.length);
+
+
 
         try {
             await addPostsToNode({ postArr, protectedQuery });
@@ -128,15 +107,14 @@ const getCommandDirectToUser = ({ userName }) => {
         const newPostMap = mapFromArr({ arr: postArr, keyName: 'id' });
         existPostMapStorage = new Map([...newPostMap, ...existPostMapStorage]);
 
-        // while (newUsersArr <= 3) {
-        //     console.log('iterator', iterator);
-        //     console.log('userArr', userArr);
-        //     // const name = userArr[iterator++];
-        //     const name = newUsersArr[iterator++];
-        //     console.log('[RECURSION]newUsersArrIterator', name);
-        //     await addNewUserFeed({ userName: name });
-        // }
+        while (iterator <= 100) {
+            console.log('iterator', iterator);
+            console.log('userArr', userArr);
+            // const name = userArr[iterator++];
+            const name = newUsersArr[iterator++];
+            console.log('[RECURSION]newUsersArrIterator', name);
+            if (maxLevels) await addNewUserFeed({ userName: name, maxLevels: --maxLevels });
+        }
     }
-    await addNewUserFeed({ userName: twitterUserName });
+    await addNewUserFeed({ userName: twitterUserName, maxLevels: 100 });
 })();
-

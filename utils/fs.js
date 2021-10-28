@@ -22,9 +22,9 @@ const readFile = async ({ filePath }) => {
 }
 
 
-const appendNewJsonFile = async ({ userName, listLikeJson, type }) => {
+const appendNewJsonFile = async ({ userName, listLikeJson, type, folderPath }) => {
     try {
-        await fsp.appendFile(`indexes/${type}_${userName}.json`, listLikeJson);
+        await fsp.appendFile(`${folderPath}/${type}_${userName}.json`, listLikeJson);
     } catch (e) {
         console.error("[fs][appendNewJsonFile]", e);
     }

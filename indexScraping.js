@@ -12,7 +12,7 @@ const sleep = require('util').promisify(setTimeout)
 const PromiseBird = require('bluebird');
 const currentUserTweetsPath = './currentUserTweets.json';
 const directToCurrentUserPath = './directToCurrentUserTweets.json';
-const indexes = './indexes';
+
 const { getAllHostsIndex, getUsersData } = require('./utils/dataBaseQuery/receiveBaseData');
 const { addPostsToNode, addSourceToNode } = require('./utils/dataBaseQuery/sendToDataBase');
 const { readFile, updateFile, appendNewJsonFile } = require('./utils/fs');
@@ -20,17 +20,18 @@ const { generatePostArr, generateSourcesMap, generatePostFromTweet,
     generateTweetThreads, generateUserMap, mapFromArr, correctJsonData } = require('./utils/generateData');
 const { executeCommand } = require('./utils/bashCommands');
 
+// const twitterUserName = 'Bg53G';
+const twitterUserName = 'Cristiano';
+// const folderPath = './indexes';
+const folderPath = './indexesTest';
+const maxNamesPerUser = 1000;
+const maxIterator = 1000;
+const currentUserFileName = 'currentUserTweets.json';
+const directToUserFileName = 'directToCurrentUserTweets.json';
 
+// for short list of files 
+// const indexesFilePath = './indexes_copy'; 
 
-// const twitterUserName = 'fcsm_official';
-// const userName = 'Bg53G';
-// const twitterUserName = 'asamigate';
-const twitterUserName = 'Bg53G';
-// const twitterUserName = 'elonmusk';
-
-// const twitterUserName = 'bbseva';
-
-// const getCurrentUserTweets = `docker run --mount type=bind,source="${__dirname}/currentUserTweets.json,target=/home/file.json"  -i a22c974b8730 twint -u ${twitterUserName} -o /home/file.json --json`;
 
 const generateCurrentUserTweetsPath = ({ userName }) => {
     return `${indexes}/${userName}.json`;
@@ -39,26 +40,37 @@ const generateInboxUserTweetsPath = ({ userName }) => {
     return `${indexes}/inbox-${userName}.json`;
 }
 
-const getCommandCurrentUserTweets = ({ userName }) => {
-    return `docker run --mount type=bind,source="${__dirname}/currentUserTweets.json,target=/home/file.json" -i a22c974b8730 twint -u ${userName} --retweets -o /home/file.json --json`
+
+
+//!!! if does't use docker need define how set path (currentUserTweets.json or directToCurrentUserTweets.json), like path where twint save data
+const getCommandCurrentUserTweets = ({ userName, useDocker, fileName }) => {
+    let command;
+    if (!useDocker) {
+        command = `twint - u ${userName} --retweets - o / home / ${fileName}--json`
+    }
+    else command = `docker run --mount type=bind,source="${__dirname}/${fileName},target=/home/file.json" -i a22c974b8730 twint -u ${userName} --retweets -o /home/file.json --json`
+    return command;
 }
-const getCommandDirectToUser = ({ userName }) => {
-    return `docker run --mount type=bind,source="${__dirname}/directToCurrentUserTweets.json,target=/home/file.json"  -i a22c974b8730 twint -s "to:@${userName}"  -o /home/file.json --json`
+
+//    -o /home/file.json --json
+const getCommandDirectToUser = ({ userName, useDocker, fileName }) => {
+    let command;
+    if (!useDocker) {
+        command = `twint -s "to:@${userName}"  -o /home/${fileName} --json`
+    }
+    else command = `docker run --mount type=bind,source="${__dirname}/${fileName},target=/home/file.json"  -i a22c974b8730 twint -s "to:@${userName}"  -o /home/file.json --json`
+    return command;
 }
 
 (async () => {
     let iterator = 0, gatheredPosts = [], hostSources = [], existSourceMapStorage = new Map();
-
     let newUsersArr = [];
 
-
-
-    const addNewUserFeed = async ({ userName }) => {
+    const addNewUserFeed = async ({ userName, maxLevels }) => {
         let userTweetsArr, userTweetOwnPage, directToUserTweetsArr, listLikeJsonUser, listLikeJsonInbox;
-        console.log('[addNewUserFeed]----------------[userName]', userName);
         try {
             await updateFile({ filePath: currentUserTweetsPath, newData: '' });
-            await executeCommand({ command: getCommandCurrentUserTweets({ userName }) });
+            await executeCommand({ command: getCommandCurrentUserTweets({ userName, useDocker: true, fileName: currentUserFileName }) });
         } catch (e) {
             console.warn('[executeCommand][getCurrentUserTweets]', e)
         }
@@ -70,7 +82,7 @@ const getCommandDirectToUser = ({ userName }) => {
         }
 
         try {
-            await appendNewJsonFile({ userName, listLikeJson: listLikeJsonUser, type: 'user' });
+            await appendNewJsonFile({ userName, listLikeJson: listLikeJsonUser, type: 'user', folderPath });
         } catch (e) {
             console.warn('[indexOne][appendNewJsonFile]', e);
         }
@@ -80,7 +92,7 @@ const getCommandDirectToUser = ({ userName }) => {
 
         try {
             await updateFile({ filePath: directToCurrentUserPath, newData: '' });
-            await executeCommand({ command: getCommandDirectToUser({ userName }) });
+            await executeCommand({ command: getCommandDirectToUser({ userName, useDocker: true, fileName: directToUserFileName }) });
         }
         catch (e) {
             console.warn('[executeCommand][directToUserTweets]', e);
@@ -91,35 +103,27 @@ const getCommandDirectToUser = ({ userName }) => {
             console.warn('[readFile][directToUserTwitsArr]', e);
         }
         try {
-            await appendNewJsonFile({ userName, listLikeJson: listLikeJsonInbox, type: 'inbox' });
+            await appendNewJsonFile({ userName, listLikeJson: listLikeJsonInbox, type: 'inbox', folderPath });
         } catch (e) {
             console.warn('[indexOne][appendNewJsonFile]', e);
         }
 
 
         directToUserTweetsArr = correctJsonData({ listLikeJson: listLikeJsonInbox });
-
         const usersDirectToMap = generateUserMap({ tweets: directToUserTweetsArr, userStorageMap: existSourceMapStorage });
         const currentUserMap = generateUserMap({ tweets: userTweetOwnPage, isCurrent: true, userStorageMap: existSourceMapStorage });
+
         let combineUsersMap = new Map([...usersDirectToMap, ...currentUserMap]);
-        const sourcesMap = generateSourcesMap({ usersMap: combineUsersMap });
-
-        let directToArrNames = Array.from(sourcesMap.keys());
-        newUsersArr = [...newUsersArr, ...directToArrNames];
-        console.log('newUsersArr', newUsersArr.length);
-
-        existSourceMapStorage = new Map([...combineUsersMap, ...existSourceMapStorage]);
-
-        let directToArrNames = Array.from(combineUsersMap.keys());
-        newUsersArr = [...newUsersArr, ...directToArrNames];
+        let currentArrNames = Array.from(combineUsersMap.keys());
+        newUsersArr = [...newUsersArr, ...currentArrNames];
 
         while (iterator <= 1000) {
             console.log('iterator', iterator);
             const name = newUsersArr[iterator++];
             console.log('[RECURSION]newUsersArrIterator', name);
-            await addNewUserFeed({ userName: name });
+            if (maxLevels) await addNewUserFeed({ userName: name, maxLevels: --maxLevels });
         }
     }
-    await addNewUserFeed({ userName: twitterUserName });
+    await addNewUserFeed({ userName: twitterUserName, maxLevels: 100 });
 })();
 
