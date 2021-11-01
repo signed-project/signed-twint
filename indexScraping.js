@@ -21,13 +21,14 @@ const { generatePostArr, generateSourcesMap, generatePostFromTweet,
 const { executeCommand } = require('./utils/bashCommands');
 
 // const twitterUserName = 'Bg53G';
-const twitterUserName = 'Cristiano';
+const twitterUserName = 'realMeetKevin';
 // const folderPath = './indexes';
 const folderPath = './indexesTest';
 const maxNamesPerUser = 1000;
 const maxIterator = 1000;
 const currentUserFileName = 'currentUserTweets.json';
 const directToUserFileName = 'directToCurrentUserTweets.json';
+const useDocker = false;
 
 // for short list of files 
 // const indexesFilePath = './indexes_copy'; 
@@ -46,7 +47,7 @@ const generateInboxUserTweetsPath = ({ userName }) => {
 const getCommandCurrentUserTweets = ({ userName, useDocker, fileName }) => {
     let command;
     if (!useDocker) {
-        command = `twint - u ${userName} --retweets - o / home / ${fileName}--json`
+        command = `twint -u ${userName} --retweets -o ${__dirname}/${fileName} --json`
     }
     else command = `docker run --mount type=bind,source="${__dirname}/${fileName},target=/home/file.json" -i a22c974b8730 twint -u ${userName} --retweets -o /home/file.json --json`
     return command;
@@ -56,7 +57,7 @@ const getCommandCurrentUserTweets = ({ userName, useDocker, fileName }) => {
 const getCommandDirectToUser = ({ userName, useDocker, fileName }) => {
     let command;
     if (!useDocker) {
-        command = `twint -s "to:@${userName}"  -o /home/${fileName} --json`
+        command = `twint -s "to:@${userName}"  -o ${__dirname}/${fileName} --json`
     }
     else command = `docker run --mount type=bind,source="${__dirname}/${fileName},target=/home/file.json"  -i a22c974b8730 twint -s "to:@${userName}"  -o /home/file.json --json`
     return command;
@@ -70,7 +71,7 @@ const getCommandDirectToUser = ({ userName, useDocker, fileName }) => {
         let userTweetsArr, userTweetOwnPage, directToUserTweetsArr, listLikeJsonUser, listLikeJsonInbox;
         try {
             await updateFile({ filePath: currentUserTweetsPath, newData: '' });
-            await executeCommand({ command: getCommandCurrentUserTweets({ userName, useDocker: true, fileName: currentUserFileName }) });
+            await executeCommand({ command: getCommandCurrentUserTweets({ userName, useDocker: useDocker, fileName: currentUserFileName }) });
         } catch (e) {
             console.warn('[executeCommand][getCurrentUserTweets]', e)
         }
@@ -92,7 +93,7 @@ const getCommandDirectToUser = ({ userName, useDocker, fileName }) => {
 
         try {
             await updateFile({ filePath: directToCurrentUserPath, newData: '' });
-            await executeCommand({ command: getCommandDirectToUser({ userName, useDocker: true, fileName: directToUserFileName }) });
+            await executeCommand({ command: getCommandDirectToUser({ userName, useDocker: useDocker, fileName: directToUserFileName }) });
         }
         catch (e) {
             console.warn('[executeCommand][directToUserTweets]', e);
