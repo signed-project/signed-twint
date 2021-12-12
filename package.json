@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --inspect index.js",
-    "one": "node --inspect indexOne.js"
+    "get": "node --inspect indexScraping.js",
+    "send": "node --inspect indexSending.js",
+    "start": "node --inspect indexOne.js"
   },
   "author": "",
   "license": "ISC",

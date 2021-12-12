@@ -20,6 +20,7 @@ class User {
         this.data = {
             wif: wifEncode,
             userName: data.userName ? data.userName : '',
+            token: data.token ? data.token : '',
             source: data.source ? data.source : {},
         };
     }
@@ -38,7 +39,7 @@ class User {
         const srpData = getDataSrp({ userName: this.data.userName, password: credentials.password });
         const hosts = [
             {
-                assets: `${host.API_HOST}${publicApi.HOST_ASSETS}`,
+                assets: `${publicApi.API_HOST_ASSETS}`,
                 index: `${host.PUBLIC_API_INDEX_HOST}/${userBitcoinData.address}`,
                 inbox: `${host.API_HOST}${inboxApi.INBOX}`,
                 tag: `${host.PUBLIC_API_TAG_HOST}`,
@@ -63,8 +64,6 @@ class User {
                 hosts: hosts,
             }
         };
-
-
 
         const signatures = getSignatures({ data: data.source, wif: data.wif });
         const hash = getHash({ data: data.source });
