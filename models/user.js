@@ -14,11 +14,15 @@ class User {
         if (!data.encryptedWif) {
             this.data.wif = ''
         };
+        /*
+        console.log('bip38.decrypt')
         const decryptedKey = bip38.decrypt(data?.encryptedWif, credentials.password)
+        console.log('wif.encode')
         const wifEncode = wif.encode(0x80, decryptedKey.privateKey, decryptedKey.compressed);
-
+        console.log('done')
+        */
         this.data = {
-            wif: wifEncode,
+            //wif: wifEncode,
             userName: data.userName ? data.userName : '',
             token: data.token ? data.token : '',
             source: data.source ? data.source : {},

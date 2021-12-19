@@ -6,7 +6,8 @@
   "scripts": {
     "get": "node --inspect indexScraping.js",
     "send": "node --inspect indexSending.js",
-    "start": "node --inspect indexOne.js"
+    "start": "node --inspect indexOne.js",
+    "upload": "node upload.js"
   },
   "author": "",
   "license": "ISC",

@@ -77,7 +77,7 @@ const addPostsToNode = async ({ postArr, protectedQuery }) => {
     for (let i = 0; i < postArr.length; i++) {
         let post = postArr[i];
         console.log('[III]', i);
-        console.log('[post][post.createdAt]', post.createdAt);
+        console.log(post);
         // console.log('post---token', post.token);
 
         let path, data;

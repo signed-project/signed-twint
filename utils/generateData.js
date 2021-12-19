@@ -74,10 +74,12 @@ const generatePostArr = ({ threads, existPostMapStorage, existSourceMapStorage }
 
 
 const generateSourcesMap = ({ usersMap }) => {
+    console.log("Generating sources map for " + usersMap.size + " users")
     if (usersMap.size === 0) {
         return usersMap
     }
     for (let entry of usersMap) {
+        console.log("Creating " + entry[1].username + " username")
         const userModel = new User({ userName: entry[1].username });
         const userAdopted = userModel.newUser;
         usersMap.set(entry[0], userAdopted);
@@ -104,11 +106,11 @@ const generateTweetThreads = ({ onwTweets, tweetsToUser }) => {
         return []
     }
     const tweetAndCommentsArr = onwTweets.map(tw => {
-        const commentsList = tweetsToUser.filter(t => t.conversation_id === tw.conversation_id);
-        if (commentsList.length > 0) {
-            console.log('____________________commentsList____________________', commentsList.length);
-            console.log('____________________onwTweets____________________', onwTweets.length);
-        }
+        // const commentsList = tweetsToUser.filter(t => t.conversation_id === tw.conversation_id);
+        // if (commentsList.length > 0) {
+        //     console.log('____________________commentsList____________________', commentsList.length);
+        //     console.log('____________________onwTweets____________________', onwTweets.length);
+        // }
         // console.log('tw.tweet', tw.tweet);
         return ({
             comments: tweetsToUser.filter(t => t.conversation_id === tw.conversation_id),
@@ -145,7 +147,6 @@ const generateUserMap = ({ tweets, isCurrent = false, userStorageMap }) => {
 }
 
 const correctJsonData = ({ listLikeJson }) => {
-
     const listLikeJsonWithoutSpace = listLikeJson.trim()
     const jsonDataArr = "[" + listLikeJsonWithoutSpace.replace(/\n/g, ",") + "]";
     return JSON.parse(jsonDataArr);

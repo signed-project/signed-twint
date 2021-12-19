@@ -19,15 +19,15 @@ const { generatePostArr, generateSourcesMap, generatePostFromTweet,
     generateTweetThreads, generateUserMap, mapFromArr, correctJsonData } = require('./utils/generateData');
 
 
-const twitterUserName = 'Bg53G';
-const folderPath = './indexes_copy';
+const twitterUserName = 'ParikPatelCFA';
+const folderPath = './indexesTest';
 // const folderPath = './indexes';
 // const getCurrentUserTweets = `docker run --mount type=bind,source="${__dirname}/currentUserTweets.json,target=/home/file.json"  -i a22c974b8730 twint -u ${twitterUserName} -o /home/file.json --json`;
 
 
-const generatePath = ({ folderPath, userName, type, }) => {
-    const userMark = `${type}_${userName}`;
-    return `${folderPath}/${userMark}.json`;
+const generatePath = ({ folderPath, userName, type }) => {
+    const userMark = ``;
+    return `${folderPath}/${type}_${userName}.json`;
 }
 
 
@@ -39,71 +39,62 @@ const generatePath = ({ folderPath, userName, type, }) => {
         hostSources = [],
         existSourceMapStorage = new Map(),
         newUsersArr = [];
-    try {
-        ({ gatheredPosts, hostSources } = await getAllHostsIndex({ query: publicQuery(), host, userApi }));
-    } catch (e) {
-        console.warn('[indexOne][getUsersData]', e);
-    }
 
-    try {
+        ({ gatheredPosts, hostSources } = await getAllHostsIndex({ query: publicQuery(), host, userApi }));
+        let existPostMapStorage = mapFromArr({ arr: gatheredPosts, keyName: 'id' });
+
         existSourceMapStorage = await getUsersData({ sources: hostSources, query: publicQuery() });
         console.log('existSourceMapStorage', existSourceMapStorage.size);
-    } catch (e) {
-        console.warn('[indexOne][getUsersData]', e);
-    }
-    let existPostMapStorage = mapFromArr({ arr: gatheredPosts, keyName: 'id' });
+
+    
 
     const addNewUserFeed = async ({ userName, maxLevels }) => {
         let userTweetsArr, userTweetOwnPage, directToUserTweetsArr, listLikeJsonUser, listLikeJsonInbox;
-        console.log('[addNewUserFeed]----------------[userName]', userName);
+        console.log('addNewUserFeed for user ' + userName);
 
-        try {
-            listLikeJsonUser = await readFile({ filePath: generatePath({ folderPath, userName, type: 'user' }) });
-        } catch (e) {
-            console.log('[[indexOne][appendNewJsonFile]', e);
-        }
-
+        let filePath = generatePath({ folderPath, userName, type: 'user' })
+        console.log('Reading ' + userName + ' tweets from '+ filePath)
+        listLikeJsonUser = await readFile({ filePath });
         userTweetsArr = correctJsonData({ listLikeJson: listLikeJsonUser });
+        console.log('Got ' + userTweetsArr.length + ' tweets')
+
         userTweetOwnPage = userTweetsArr.filter(tweet => tweet.reply_to.length === 0);
         userTweetOwnPage = userTweetOwnPage.reverse();
-        try {
-            listLikeJsonInbox = await readFile({ filePath: generatePath({ folderPath, userName, type: 'inbox' }) });
-        } catch (e) {
-            console.warn('[readFile][directToUserTwitsArr]', e);
-        }
+        console.log('Of which ' + userTweetOwnPage.length + ' are not replies to somebody else')
 
+        filePath = generatePath({ folderPath, userName, type: 'inbox' })
+        console.log('Reading replies to user from '+ filePath)
+        listLikeJsonInbox = await readFile({ filePath });
         directToUserTweetsArr = correctJsonData({ listLikeJson: listLikeJsonInbox });
-        console.log('listLikeJson[directToUserTweetsArr[data data data ]]', directToUserTweetsArr.length);
+        console.log('Got ' + directToUserTweetsArr.length + ' tweets')
+
+        directToUserTweetsArr.sort((a,b) => {a.created_at > b.created_at})
+        directToUserTweetsArr = directToUserTweetsArr.slice(-5)
         // const directToUserTweetsArrAttachments = directToUserTweetsArr.filter(tweet => tweet.attachments.length > 0);
 
         const threads = generateTweetThreads({ onwTweets: userTweetOwnPage, tweetsToUser: directToUserTweetsArr });
+        console.log("Generated " + threads.length + " threads")
 
         const usersDirectToMap = generateUserMap({ tweets: directToUserTweetsArr, userStorageMap: existSourceMapStorage });
+        console.log("1")
         const currentUserMap = generateUserMap({ tweets: userTweetOwnPage, isCurrent: true, userStorageMap: existSourceMapStorage });
+        console.log("2")
         let combineUsersMap = new Map([...usersDirectToMap, ...currentUserMap]);
+        console.log("3")
         const sourcesMap = generateSourcesMap({ usersMap: combineUsersMap });
-
-        try {
-            hashedTargetPost = await addSourceToNode({ sourceMap: sourcesMap, query: publicQuery() });
-            hashedTargetPost = []
-        } catch (e) {
-            console.warn('[addSourceToNode][sourcesMap]', e);
-        }
+        console.log("4")
+        hashedTargetPost = await addSourceToNode({ sourceMap: sourcesMap, query: publicQuery() });
+        hashedTargetPost = []
+        console.log("5")
         existSourceMapStorage = new Map([...combineUsersMap, ...existSourceMapStorage]);
-
+        console.log("6")
         let directToArrNames = Array.from(combineUsersMap.keys());
         newUsersArr = [...newUsersArr, ...directToArrNames];
-
+        console.log("7")
         const postArr = generatePostArr({ threads, existPostMapStorage, existSourceMapStorage });
-
-
-
-        try {
-            await addPostsToNode({ postArr, protectedQuery });
-        }
-        catch (e) {
-            console.warn('[readFile][directToUserTwitsArr]', e);
-        }
+        console.log("8")
+        await addPostsToNode({ postArr, protectedQuery });
+        console.log("9")
         const newPostMap = mapFromArr({ arr: postArr, keyName: 'id' });
         existPostMapStorage = new Map([...newPostMap, ...existPostMapStorage]);
 

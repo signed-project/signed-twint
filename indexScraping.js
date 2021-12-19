@@ -21,7 +21,7 @@ const { generatePostArr, generateSourcesMap, generatePostFromTweet,
 const { executeCommand } = require('./utils/bashCommands');
 
 // const twitterUserName = 'Bg53G';
-const twitterUserName = 'realMeetKevin';
+const twitterUserName = 'ParikPatelCFA';
 // const folderPath = './indexes';
 const folderPath = './indexesTest';
 const maxNamesPerUser = 1000;
